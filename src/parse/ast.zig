@@ -1,20 +1,65 @@
+const std = @import("std");
 const TokenKind = @import("../tokenize//token_kind.zig").TokenKind;
 
 pub const Ast = struct {
     program: []const Expression,
 };
 
-pub const Statement = union(enum) {
-    function: FunctionDefinition,
+pub const Statement = union(enum) { function: FunctionDeclaration, badStmt: BadStatement, attribute: AttributeStatement, variable: VariableDeclaration };
+
+pub const AttributeStatement = union(enum) {
+    inlineAttribute: void,
+    entryAttribute: void,
+    cTypeAttribute: []const u8,
 };
 
-pub const FunctionDefinition = struct {
-    name: []const u8,
-
-    pub fn new(name: []const u8) Statement {
+pub const BadStatement = struct {
+    pub fn new() Statement {
         return Statement{
-            .function = FunctionDefinition{
+            .badStmt = BadStatement{},
+        };
+    }
+};
+
+pub const VariableDeclaration = struct {
+    name: []const u8,
+    typeAnnotation: []const u8,
+    initializer: Expression,
+    isConstant: bool,
+
+    pub fn new(name: []const u8, typeAnnotation: []const u8, initializer: Expression, isConstant: bool) Statement {
+        return Statement{
+            .variable = VariableDeclaration{
                 .name = name,
+                .initializer = initializer,
+                .typeAnnotation = typeAnnotation,
+                .isConstant = isConstant,
+            },
+        };
+    }
+};
+
+pub const FunctionDeclaration = struct {
+    name: []const u8,
+    returnType: []const u8,
+    isPublic: bool,
+    attributes: std.ArrayList(AttributeStatement),
+    body: std.ArrayList(Statement),
+
+    pub fn new(
+        name: []const u8,
+        returnType: []const u8,
+        isPublic: bool,
+        attributes: std.ArrayList(AttributeStatement),
+        body: std.ArrayList(Statement),
+    ) Statement {
+        return Statement{
+            .function = FunctionDeclaration{
+                .name = name,
+                .returnType = returnType,
+                .isPublic = isPublic,
+                .attributes = attributes,
+                .body = body,
             },
         };
     }

@@ -10,11 +10,16 @@ pub const TokenKind = enum {
     SINGLE_EQUALS,
     SEMICOLON,
     COLON,
+    AT,
 
     LET,
     PUB,
     FN,
     RETURN,
+    END,
+    ENTRY,
+    INLINE,
+    C_TYPE,
 
     IDENTIFIER,
     INTEGER,

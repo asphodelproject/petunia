@@ -27,7 +27,7 @@ pub const Lexer = struct {
 
     pub fn tokenize(self: *Lexer) !void {
         while (!self.isEnd()) {
-            while (self.current_char() == ' ') {
+            while (self.current_char() == ' ' or self.current_char() == '\r') {
                 self.advance();
                 continue;
             }
@@ -47,9 +47,6 @@ pub const Lexer = struct {
         } else if (self.current_char() == '\n') {
             self.advance();
             return Token.new("\\n", TokenKind.NEWLINE);
-        } else if (self.current_char() == '\r') {
-            self.advance();
-            return Token.new("\\r", TokenKind.CARRIAGE_RETURN);
         }
 
         return self.tokenize_symbol();
@@ -67,6 +64,7 @@ pub const Lexer = struct {
             '*' => Token.new("*", TokenKind.STAR),
             '/' => Token.new("/", TokenKind.SLASH),
             '%' => Token.new("%", TokenKind.MODULO),
+            '@' => Token.new("@", TokenKind.AT),
             else => Token.new("BAD", TokenKind.BAD),
         };
 
@@ -111,15 +109,14 @@ pub const Lexer = struct {
     }
 
     fn get_identifier_kind(identifier: []const u8) TokenKind {
-        if (match_keyword(identifier, "let")) {
-            return TokenKind.LET;
-        } else if (match_keyword(identifier, "pub")) {
-            return TokenKind.PUB;
-        } else if (match_keyword(identifier, "fn")) {
-            return TokenKind.FN;
-        } else if (match_keyword(identifier, "return")) {
-            return TokenKind.RETURN;
-        }
+        if (match_keyword(identifier, "let")) return TokenKind.LET;
+        if (match_keyword(identifier, "pub")) return TokenKind.PUB;
+        if (match_keyword(identifier, "fn")) return TokenKind.FN;
+        if (match_keyword(identifier, "return")) return TokenKind.RETURN;
+        if (match_keyword(identifier, "end")) return TokenKind.END;
+        if (match_keyword(identifier, "entry")) return TokenKind.ENTRY;
+        if (match_keyword(identifier, "inline")) return TokenKind.INLINE;
+        if (match_keyword(identifier, "ctype")) return TokenKind.C_TYPE;
 
         return TokenKind.IDENTIFIER;
     }
