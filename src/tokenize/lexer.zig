@@ -9,6 +9,7 @@ pub const Lexer = struct {
     current: usize,
     buffer: []const u8,
     tokens: std.ArrayList(Token),
+    isEmbedMode: bool = false,
 
     pub fn new(buffer: []const u8, allocator: Allocator) Lexer {
         return Lexer{
@@ -33,10 +34,45 @@ pub const Lexer = struct {
             }
 
             const token = try self.tokenize_char();
+            if (token.kind == TokenKind.EMBED) {
+                try self.tokens.append(token);
+
+                const embedToken = try self.tokenize_embed();
+                try self.tokens.append(embedToken);
+
+                continue;
+            }
+
             try self.tokens.append(token);
         }
 
         try self.tokens.append(Token.eof());
+    }
+
+    fn tokenize_embed(self: *Lexer) !Token {
+        self.advance();
+
+        const start: usize = self.current;
+        while (true) {
+            if (self.isEnd() or self.current_char() == ')') {
+                self.advance();
+
+                const maybeEnd = try self.tokenize_identifier();
+                if (std.mem.eql(u8, maybeEnd.lexeme, "end")) {
+                    self.current -= 4; // length of 'end' and ')'
+                    break;
+                } else {
+                    continue;
+                }
+            }
+
+            self.advance();
+        }
+
+        const lexeme = self.buffer[start..self.current];
+        self.advance();
+
+        return Token.new(lexeme, TokenKind.EMBED_BLOCK);
     }
 
     fn tokenize_char(self: *Lexer) !Token {
@@ -47,9 +83,23 @@ pub const Lexer = struct {
         } else if (self.current_char() == '\n') {
             self.advance();
             return Token.new("\\n", TokenKind.NEWLINE);
+        } else if (self.current_char() == '\"') {
+            return self.tokenize_string();
         }
 
         return self.tokenize_symbol();
+    }
+
+    fn tokenize_string(self: *Lexer) !Token {
+        self.advance();
+
+        const start: usize = self.current;
+        while (!self.isEnd() and self.current_char() != '\"') {
+            self.advance();
+        }
+
+        const lexeme = self.buffer[start..self.current];
+        return Token.new(lexeme, TokenKind.STRING);
     }
 
     fn tokenize_symbol(self: *Lexer) !Token {
@@ -118,6 +168,7 @@ pub const Lexer = struct {
         if (match_keyword(identifier, "entry")) return TokenKind.ENTRY;
         if (match_keyword(identifier, "inline")) return TokenKind.INLINE;
         if (match_keyword(identifier, "ctype")) return TokenKind.C_TYPE;
+        if (match_keyword(identifier, "embed")) return TokenKind.EMBED;
 
         return TokenKind.IDENTIFIER;
     }

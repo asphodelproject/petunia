@@ -12,6 +12,7 @@ pub const TokenKind = enum {
     SEMICOLON,
     COLON,
     AT,
+    EMBED,
 
     LET,
     PUB,
@@ -24,6 +25,8 @@ pub const TokenKind = enum {
 
     IDENTIFIER,
     INTEGER,
+    STRING,
+    EMBED_BLOCK,
 
     NEWLINE,
     CARRIAGE_RETURN,

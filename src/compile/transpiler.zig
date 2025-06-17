@@ -91,7 +91,14 @@ pub const Transpiler = struct {
 
                 try self.compileExpr(variable.initializer, writer);
 
-                try writer.print(";\n", .{});
+                try writer.print(";", .{});
+            },
+            .embed => |embed| {
+                try writer.print("\n// start embed\n", .{});
+
+                try writer.print("{s} ", .{embed.value});
+
+                try writer.print("\n// end embed\n", .{});
             },
         }
     }

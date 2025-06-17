@@ -92,6 +92,7 @@ pub const Parser = struct {
             .badStmt => |_| {},
             .attribute => |_| {},
             .variable => |_| {},
+            .embed => |_| {},
             // .unknown => |_| {
             //     std.debug.print("Unknown\n", .{});
             // },
@@ -132,9 +133,25 @@ pub const Parser = struct {
             TokenKind.FN => try self.parseFunction(attributes),
             TokenKind.PUB => try self.parsePub(attributes),
             TokenKind.LET => try self.parseVariable(),
+            TokenKind.EMBED => try self.parseEmbed(),
             else => try self.badStmt(),
         };
 
+        return stmt;
+    }
+
+    fn parseEmbed(self: *Parser) ParseError!*AstExprs.Statement {
+        self.advance();
+
+        const next = self.current_token();
+        if (next.kind != TokenKind.EMBED_BLOCK) {
+            return self.badStmt();
+        }
+
+        self.advance();
+
+        const stmt = try self.new_stmt();
+        stmt.* = AstExprs.EmbedStatement.new(next.lexeme);
         return stmt;
     }
 

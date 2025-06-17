@@ -1,16 +1,30 @@
 const std = @import("std");
 const TokenKind = @import("../tokenize//token_kind.zig").TokenKind;
 
-pub const Ast = struct {
-    program: []const Expression,
+pub const Statement = union(enum) {
+    function: FunctionDeclaration,
+    badStmt: BadStatement,
+    attribute: AttributeStatement,
+    variable: VariableDeclaration,
+    embed: EmbedStatement,
 };
-
-pub const Statement = union(enum) { function: FunctionDeclaration, badStmt: BadStatement, attribute: AttributeStatement, variable: VariableDeclaration };
 
 pub const AttributeStatement = union(enum) {
     inlineAttribute: void,
     entryAttribute: void,
     cTypeAttribute: []const u8,
+};
+
+pub const EmbedStatement = struct {
+    value: []const u8,
+
+    pub fn new(value: []const u8) Statement {
+        return Statement{
+            .embed = EmbedStatement{
+                .value = value,
+            },
+        };
+    }
 };
 
 pub const BadStatement = struct {

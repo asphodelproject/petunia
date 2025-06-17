@@ -1,7 +1,11 @@
 @entry
 pub fn main(): u0
-    let x: u8 = 10 + 2 - 3 + 2
-    let y: *u8 = &x
+    let const x: u8 = 10 + 2 - 3 + 2
+    let const y: *u8 = &x
 
     let z: u8 = *y
+    
+    embed(
+        printf("Hello, World!");
+    )end
 end
