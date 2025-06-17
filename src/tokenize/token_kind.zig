@@ -4,6 +4,7 @@ pub const TokenKind = enum {
     STAR,
     SLASH,
     MODULO,
+    AMPERSAND,
 
     LEFT_PAREN,
     RIGHT_PAREN,

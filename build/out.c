@@ -2,10 +2,11 @@
 
 #include <stdio.h>
 
-
-
-
 void main() {
-	unsigned char x = 10;
+	unsigned char x = 10 + 2 - 3 + 2;
+
+	unsigned char *y =  &x;
+
+	unsigned char z =  *y;
 
 }

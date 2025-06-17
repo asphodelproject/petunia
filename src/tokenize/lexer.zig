@@ -65,6 +65,7 @@ pub const Lexer = struct {
             '/' => Token.new("/", TokenKind.SLASH),
             '%' => Token.new("%", TokenKind.MODULO),
             '@' => Token.new("@", TokenKind.AT),
+            '&' => Token.new("&", TokenKind.AMPERSAND),
             else => Token.new("BAD", TokenKind.BAD),
         };
 

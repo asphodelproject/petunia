@@ -148,8 +148,15 @@ pub const Parser = struct {
         self.advance();
 
         var typeAnnotation: []const u8 = "";
+        var pointerLevel: u8 = 0;
+
         if (self.match(TokenKind.COLON)) {
             self.advance();
+
+            while (self.match(TokenKind.STAR)) {
+                self.advance();
+                pointerLevel += 1;
+            }
 
             const typeAnnotationToken = self.current_token();
             if (!self.match(TokenKind.IDENTIFIER)) {
@@ -171,7 +178,7 @@ pub const Parser = struct {
         }
 
         const stmt = try self.new_stmt();
-        stmt.* = AstExprs.VariableDeclaration.new(nameToken.lexeme, typeAnnotation, expr.*, isConstant);
+        stmt.* = AstExprs.VariableDeclaration.new(nameToken.lexeme, typeAnnotation, expr.*, isConstant, pointerLevel);
         return stmt;
     }
 
@@ -310,13 +317,13 @@ pub const Parser = struct {
     }
 
     fn parseTerm(self: *Parser) ParseError!*AstExprs.Expression {
-        var left = try self.parsePrimary();
+        var left = try self.parsePointerOperator();
 
         while (self.match(TokenKind.PLUS) or self.match(TokenKind.MINUS)) {
             const op = self.current_token().kind;
             self.advance();
 
-            const right = try self.parsePrimary();
+            const right = try self.parsePointerOperator();
 
             const expr = try self.new_expr();
             expr.* = AstExprs.BinaryExpression.new(left, op, right);
@@ -325,6 +332,21 @@ pub const Parser = struct {
         }
 
         return left;
+    }
+
+    fn parsePointerOperator(self: *Parser) ParseError!*AstExprs.Expression {
+        while (self.match(TokenKind.AMPERSAND) or self.match(TokenKind.STAR)) {
+            const op = self.current_token();
+            self.advance();
+
+            const right = try self.parseExpression();
+
+            const expr = try self.new_expr();
+            expr.* = AstExprs.UnaryExpression.new(op.kind, right);
+            return expr;
+        }
+
+        return try self.parsePrimary();
     }
 
     fn parsePrimary(self: *Parser) ParseError!*AstExprs.Expression {

@@ -1,6 +1,9 @@
 const std = @import("std");
 const AstExprs = @import("../parse/ast.zig");
 
+const Token = @import("../tokenize/token.zig").Token;
+const TokenKind = @import("../tokenize/token_kind.zig").TokenKind;
+
 pub const Analyzer = struct {
     exprs: std.ArrayList(AstExprs.Statement),
 
@@ -26,6 +29,37 @@ pub const Analyzer = struct {
         switch (expr) {
             else => {},
         }
+    }
+
+    // not used yet..
+    pub fn inferNumberSizeToCType(number: i64) []const u8 {
+        return if (number >= -128 and number <= 127)
+            "signed char"
+        else if (number >= -32768 and number <= 32767)
+            "signed short"
+        else if (number >= -2147483648 and number <= 2147483647)
+            "signed int"
+        else
+            "signed long";
+    }
+
+    pub fn mapOperator(op: TokenKind) []const u8 {
+        return switch (op) {
+            TokenKind.PLUS => "+",
+            TokenKind.MINUS => "-",
+            TokenKind.STAR => "*",
+            TokenKind.SLASH => "/",
+            TokenKind.MODULO => "%",
+            TokenKind.AMPERSAND => "&",
+            else => "",
+        };
+    }
+
+    pub fn mapTokenToCType(token: Token) []const u8 {
+        return switch (token.kind) {
+            TokenKind.INTEGER => "signed int",
+            else => "",
+        };
     }
 
     pub fn mapToCType(datatype: []const u8) []const u8 {

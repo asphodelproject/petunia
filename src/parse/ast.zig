@@ -26,14 +26,16 @@ pub const VariableDeclaration = struct {
     typeAnnotation: []const u8,
     initializer: Expression,
     isConstant: bool,
+    pointerLevel: u8,
 
-    pub fn new(name: []const u8, typeAnnotation: []const u8, initializer: Expression, isConstant: bool) Statement {
+    pub fn new(name: []const u8, typeAnnotation: []const u8, initializer: Expression, isConstant: bool, pointerLevel: u8) Statement {
         return Statement{
             .variable = VariableDeclaration{
                 .name = name,
                 .initializer = initializer,
                 .typeAnnotation = typeAnnotation,
                 .isConstant = isConstant,
+                .pointerLevel = pointerLevel,
             },
         };
     }
@@ -68,7 +70,8 @@ pub const FunctionDeclaration = struct {
 pub const Expression = union(enum) {
     intExpr: IntegerExpression,
     idExpr: IdentifierExpression,
-    binExpr: BinaryExpression,
+    binary: BinaryExpression,
+    unary: UnaryExpression,
     unknown: UnknownExpression,
 };
 
@@ -79,8 +82,22 @@ pub const BinaryExpression = struct {
 
     pub fn new(left: *const Expression, op: TokenKind, right: *const Expression) Expression {
         return Expression{
-            .binExpr = BinaryExpression{
+            .binary = BinaryExpression{
                 .left = left,
+                .op = op,
+                .right = right,
+            },
+        };
+    }
+};
+
+pub const UnaryExpression = struct {
+    op: TokenKind,
+    right: *const Expression,
+
+    pub fn new(op: TokenKind, right: *const Expression) Expression {
+        return Expression{
+            .unary = UnaryExpression{
                 .op = op,
                 .right = right,
             },

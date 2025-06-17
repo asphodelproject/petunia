@@ -1,4 +1,7 @@
 @entry
 pub fn main(): u0
-    let x: u8 = 10
+    let x: u8 = 10 + 2 - 3 + 2
+    let y: *u8 = &x
+
+    let z: u8 = *y
 end
