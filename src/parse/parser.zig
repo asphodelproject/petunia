@@ -38,6 +38,7 @@ pub const Parser = struct {
     }
 
     fn printExpr(self: *Parser, expr: AstExprs.Statement, indent: usize) void {
+        std.debug.print("\n", .{});
         printIndent(indent);
 
         switch (expr) {
@@ -91,8 +92,12 @@ pub const Parser = struct {
             },
             .badStmt => |_| {},
             .attribute => |_| {},
-            .variable => |_| {},
-            .embed => |_| {},
+            .variable => |_| {
+                std.debug.print("Variable Declaration", .{});
+            },
+            .embed => |_| {
+                std.debug.print("Embed Statement", .{});
+            },
             // .unknown => |_| {
             //     std.debug.print("Unknown\n", .{});
             // },
@@ -149,6 +154,9 @@ pub const Parser = struct {
         }
 
         self.advance();
+        if (!self.expect(TokenKind.END)) {
+            return self.badStmt();
+        }
 
         const stmt = try self.new_stmt();
         stmt.* = AstExprs.EmbedStatement.new(next.lexeme);
@@ -330,17 +338,17 @@ pub const Parser = struct {
     }
 
     fn parseExpression(self: *Parser) ParseError!*AstExprs.Expression {
-        return self.parseTerm();
+        return self.parseLogicalOr();
     }
 
-    fn parseTerm(self: *Parser) ParseError!*AstExprs.Expression {
-        var left = try self.parsePointerOperator();
+    fn parseLogicalOr(self: *Parser) ParseError!*AstExprs.Expression {
+        var left = try self.parseLogicalAnd();
 
-        while (self.match(TokenKind.PLUS) or self.match(TokenKind.MINUS)) {
+        while (self.match(TokenKind.OR)) {
             const op = self.current_token().kind;
             self.advance();
 
-            const right = try self.parsePointerOperator();
+            const right = try self.parseLogicalAnd();
 
             const expr = try self.new_expr();
             expr.* = AstExprs.BinaryExpression.new(left, op, right);
@@ -349,6 +357,153 @@ pub const Parser = struct {
         }
 
         return left;
+    }
+
+    fn parseLogicalAnd(self: *Parser) ParseError!*AstExprs.Expression {
+        var left = try self.parseBitwiseOr();
+
+        while (self.match(TokenKind.AND)) {
+            const op = self.current_token().kind;
+            self.advance();
+            const right = try self.parseBitwiseOr();
+            const expr = try self.new_expr();
+            expr.* = AstExprs.BinaryExpression.new(left, op, right);
+            left = expr;
+        }
+
+        return left;
+    }
+
+    fn parseBitwiseOr(self: *Parser) ParseError!*AstExprs.Expression {
+        var left = try self.parseBitwiseXor();
+
+        while (self.match(TokenKind.PIPE)) {
+            const op = self.current_token().kind;
+            self.advance();
+            const right = try self.parseBitwiseXor();
+            const expr = try self.new_expr();
+            expr.* = AstExprs.BinaryExpression.new(left, op, right);
+            left = expr;
+        }
+
+        return left;
+    }
+
+    fn parseBitwiseXor(self: *Parser) ParseError!*AstExprs.Expression {
+        var left = try self.parseBitwiseAnd();
+
+        while (self.match(TokenKind.CARET)) {
+            const op = self.current_token().kind;
+            self.advance();
+            const right = try self.parseBitwiseAnd();
+            const expr = try self.new_expr();
+            expr.* = AstExprs.BinaryExpression.new(left, op, right);
+            left = expr;
+        }
+
+        return left;
+    }
+
+    fn parseBitwiseAnd(self: *Parser) ParseError!*AstExprs.Expression {
+        var left = try self.parseComparison();
+
+        while (self.match(TokenKind.AMPERSAND)) {
+            const op = self.current_token().kind;
+            self.advance();
+            const right = try self.parseComparison();
+            const expr = try self.new_expr();
+            expr.* = AstExprs.BinaryExpression.new(left, op, right);
+            left = expr;
+        }
+
+        return left;
+    }
+
+    fn parseComparison(self: *Parser) ParseError!*AstExprs.Expression {
+        var left = try self.parseBitwiseShift();
+
+        while (self.match(TokenKind.GREATER_THAN) or self.match(TokenKind.LESS_THAN) or self.match(TokenKind.GREATER_THAN_EQUALS) or self.match(TokenKind.LESS_THAN_EQUALS) or self.match(TokenKind.DOUBLE_EQUALS) or self.match(TokenKind.NOT_EQUALS)) {
+            const op = self.current_token().kind;
+            self.advance();
+
+            const right = try self.parseBitwiseShift();
+
+            const expr = try self.new_expr();
+            expr.* = AstExprs.BinaryExpression.new(left, op, right);
+
+            left = expr;
+        }
+
+        return left;
+    }
+
+    fn parseBitwiseShift(self: *Parser) ParseError!*AstExprs.Expression {
+        var left = try self.parseTerm();
+
+        while (self.match(TokenKind.LEFT_SHIFT) or self.match(TokenKind.RIGHT_SHIFT)) {
+            const op = self.current_token().kind;
+            self.advance();
+
+            const right = try self.parseTerm();
+
+            const expr = try self.new_expr();
+            expr.* = AstExprs.BinaryExpression.new(left, op, right);
+
+            left = expr;
+        }
+
+        return left;
+    }
+
+    fn parseTerm(self: *Parser) ParseError!*AstExprs.Expression {
+        var left = try self.parseFactor();
+
+        while (self.match(TokenKind.PLUS) or self.match(TokenKind.MINUS)) {
+            const op = self.current_token().kind;
+            self.advance();
+
+            const right = try self.parseFactor();
+
+            const expr = try self.new_expr();
+            expr.* = AstExprs.BinaryExpression.new(left, op, right);
+
+            left = expr;
+        }
+
+        return left;
+    }
+
+    fn parseFactor(self: *Parser) ParseError!*AstExprs.Expression {
+        var left = try self.parseUnary();
+
+        while (self.match(TokenKind.STAR) or self.match(TokenKind.SLASH) or self.match(TokenKind.MODULO)) {
+            const op = self.current_token().kind;
+            self.advance();
+
+            const right = try self.parseUnary();
+
+            const expr = try self.new_expr();
+            expr.* = AstExprs.BinaryExpression.new(left, op, right);
+
+            left = expr;
+        }
+
+        return left;
+    }
+
+    fn parseUnary(self: *Parser) ParseError!*AstExprs.Expression {
+        while (self.match(TokenKind.NOT) or self.match(TokenKind.TILDE)) {
+            const op = self.current_token();
+            self.advance();
+
+            const right = try self.parseExpression();
+
+            const expr = try self.new_expr();
+            expr.* = AstExprs.UnaryExpression.new(op.kind, right);
+            return expr;
+        }
+
+        return try self.parsePointerOperator();
     }
 
     fn parsePointerOperator(self: *Parser) ParseError!*AstExprs.Expression {
@@ -377,6 +532,10 @@ pub const Parser = struct {
             expr.* = AstExprs.IntegerExpression.new(value);
             return expr;
         } else if (token.kind == TokenKind.IDENTIFIER) {
+            const expr = try self.new_expr();
+            expr.* = AstExprs.IdentifierExpression.new(token.lexeme);
+            return expr;
+        } else if (token.kind == TokenKind.TRUE or token.kind == TokenKind.FALSE) {
             const expr = try self.new_expr();
             expr.* = AstExprs.IdentifierExpression.new(token.lexeme);
             return expr;

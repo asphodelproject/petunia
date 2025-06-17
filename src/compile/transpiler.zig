@@ -23,6 +23,7 @@ pub const Transpiler = struct {
         try writer.writeAll(Petunia.compilerGeneratedMessage);
 
         try writer.writeAll("\n#include <stdio.h>\n");
+        try writer.writeAll("#include <stdbool.h>\n");
 
         for (self.exprs.items) |expr| {
             try self.compileStmt(expr, writer, 0);

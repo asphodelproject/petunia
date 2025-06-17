@@ -87,6 +87,7 @@ pub const Expression = union(enum) {
     binary: BinaryExpression,
     unary: UnaryExpression,
     unknown: UnknownExpression,
+    boolExpr: BooleanExpression,
 };
 
 pub const BinaryExpression = struct {
@@ -114,6 +115,18 @@ pub const UnaryExpression = struct {
             .unary = UnaryExpression{
                 .op = op,
                 .right = right,
+            },
+        };
+    }
+};
+
+pub const BooleanExpression = struct {
+    isTrue: bool,
+
+    pub fn new(isTrue: bool) Expression {
+        return Expression{
+            .boolExpr = BooleanExpression{
+                .isTrue = isTrue,
             },
         };
     }

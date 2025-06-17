@@ -103,11 +103,29 @@ pub const Lexer = struct {
     }
 
     fn tokenize_symbol(self: *Lexer) !Token {
-        const token = switch (self.current_char()) {
+        const c = self.current_char();
+        self.advance();
+
+        const token = switch (c) {
             ':' => Token.new(":", TokenKind.COLON),
             '(' => Token.new("(", TokenKind.LEFT_PAREN),
             ')' => Token.new(")", TokenKind.RIGHT_PAREN),
-            '=' => Token.new("=", TokenKind.SINGLE_EQUALS),
+            '=' => {
+                if (self.current_char() == '=') {
+                    self.advance();
+                    return Token.new("==", TokenKind.DOUBLE_EQUALS);
+                }
+
+                return Token.new("=", TokenKind.SINGLE_EQUALS);
+            },
+            '!' => {
+                if (self.current_char() == '=') {
+                    self.advance();
+                    return Token.new("!=", TokenKind.NOT_EQUALS);
+                }
+
+                return Token.new("=", TokenKind.EXCLAMATION);
+            },
             ';' => Token.new(";", TokenKind.SEMICOLON),
             '+' => Token.new("+", TokenKind.PLUS),
             '-' => Token.new("-", TokenKind.MINUS),
@@ -116,11 +134,45 @@ pub const Lexer = struct {
             '%' => Token.new("%", TokenKind.MODULO),
             '@' => Token.new("@", TokenKind.AT),
             '&' => Token.new("&", TokenKind.AMPERSAND),
+            '|' => Token.new("|", TokenKind.PIPE),
+            '~' => Token.new("~", TokenKind.TILDE),
+            '^' => Token.new("^", TokenKind.CARET),
+            '>' => {
+                if (self.current_char() == '=') {
+                    self.advance();
+                    return Token.new(">=", TokenKind.GREATER_THAN_EQUALS);
+                }
+
+                if (self.current_char() == '>') {
+                    self.advance();
+                    return Token.new(">>", TokenKind.RIGHT_SHIFT);
+                }
+
+                return Token.new(">", TokenKind.GREATER_THAN);
+            },
+            '<' => {
+                if (self.current_char() == '=') {
+                    self.advance();
+                    return Token.new("<=", TokenKind.LESS_THAN_EQUALS);
+                }
+
+                if (self.current_char() == '<') {
+                    self.advance();
+                    return Token.new("<<", TokenKind.LEFT_SHIFT);
+                }
+
+                return Token.new("<", TokenKind.LESS_THAN);
+            },
             else => Token.new("BAD", TokenKind.BAD),
         };
 
-        self.advance();
         return token;
+    }
+
+    fn peek(self: *Lexer) u8 {
+        const next = self.current + 1;
+        if (next >= self.buffer.len) return @as(u8, 0);
+        return self.buffer[next];
     }
 
     fn tokenize_whitespace(self: *Lexer) !Token {
@@ -169,6 +221,11 @@ pub const Lexer = struct {
         if (match_keyword(identifier, "inline")) return TokenKind.INLINE;
         if (match_keyword(identifier, "ctype")) return TokenKind.C_TYPE;
         if (match_keyword(identifier, "embed")) return TokenKind.EMBED;
+        if (match_keyword(identifier, "true")) return TokenKind.TRUE;
+        if (match_keyword(identifier, "false")) return TokenKind.FALSE;
+        if (match_keyword(identifier, "not")) return TokenKind.NOT;
+        if (match_keyword(identifier, "and")) return TokenKind.AND;
+        if (match_keyword(identifier, "or")) return TokenKind.OR;
 
         return TokenKind.IDENTIFIER;
     }
