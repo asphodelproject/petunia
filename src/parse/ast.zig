@@ -7,12 +7,51 @@ pub const Statement = union(enum) {
     attribute: AttributeStatement,
     variable: VariableDeclaration,
     embed: EmbedStatement,
+    returnStmt: ReturnStatement,
+    callStmt: FunctionCallStatement,
+    assign: AssignmentStatement,
+};
+
+pub const Expression = union(enum) {
+    intExpr: IntegerExpression,
+    idExpr: IdentifierExpression,
+    binary: BinaryExpression,
+    unary: UnaryExpression,
+    unknown: UnknownExpression,
+    boolExpr: BooleanExpression,
+    callExpr: FunctionCallExpression,
 };
 
 pub const AttributeStatement = union(enum) {
     inlineAttribute: void,
     entryAttribute: void,
     cTypeAttribute: []const u8,
+};
+
+pub const AssignmentStatement = struct {
+    identifier: []const u8,
+    value: Expression,
+
+    pub fn new(identifier: []const u8, value: Expression) Statement {
+        return Statement{
+            .assign = AssignmentStatement{
+                .identifier = identifier,
+                .value = value,
+            },
+        };
+    }
+};
+
+pub const ReturnStatement = struct {
+    value: Expression,
+
+    pub fn new(value: Expression) Statement {
+        return Statement{
+            .returnStmt = ReturnStatement{
+                .value = value,
+            },
+        };
+    }
 };
 
 pub const EmbedStatement = struct {
@@ -23,14 +62,6 @@ pub const EmbedStatement = struct {
             .embed = EmbedStatement{
                 .value = value,
             },
-        };
-    }
-};
-
-pub const BadStatement = struct {
-    pub fn new() Statement {
-        return Statement{
-            .badStmt = BadStatement{},
         };
     }
 };
@@ -81,13 +112,30 @@ pub const FunctionDeclaration = struct {
     }
 };
 
-pub const Expression = union(enum) {
-    intExpr: IntegerExpression,
-    idExpr: IdentifierExpression,
-    binary: BinaryExpression,
-    unary: UnaryExpression,
-    unknown: UnknownExpression,
-    boolExpr: BooleanExpression,
+pub const FunctionCallStatement = struct {
+    call: FunctionCallExpression,
+
+    pub fn new(identifier: []const u8) Statement {
+        return Statement{
+            .callStmt = FunctionCallStatement{
+                .call = FunctionCallExpression{
+                    .identifier = identifier,
+                },
+            },
+        };
+    }
+};
+
+pub const FunctionCallExpression = struct {
+    identifier: []const u8,
+
+    pub fn new(identifier: []const u8) Expression {
+        return Expression{
+            .callExpr = FunctionCallExpression{
+                .identifier = identifier,
+            },
+        };
+    }
 };
 
 pub const BinaryExpression = struct {
@@ -157,3 +205,11 @@ pub const IntegerExpression = struct {
 };
 
 pub const UnknownExpression = struct {};
+
+pub const BadStatement = struct {
+    pub fn new() Statement {
+        return Statement{
+            .badStmt = BadStatement{},
+        };
+    }
+};

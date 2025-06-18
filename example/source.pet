@@ -3,7 +3,6 @@ pub fn main(): u0
     let x: u8 = 10 + 2 - 3 + 2
     let y: *u8 = &x
 
-    let b: bool = 1 & 1 | ~2 << 3
-
-    
+    let z: u8 = 2
+    z = z + 1
 end

@@ -28,7 +28,7 @@ pub const Parser = struct {
     pub fn print(self: *Parser) void {
         std.debug.print("\n", .{});
         for (self.exprs.items) |expr| {
-            self.printExpr(expr, 0);
+            self.printStmt(expr, 0);
             std.debug.print("\n", .{});
         }
     }
@@ -37,7 +37,7 @@ pub const Parser = struct {
         for (0..indent) |_| std.debug.print(" ", .{});
     }
 
-    fn printExpr(self: *Parser, expr: AstExprs.Statement, indent: usize) void {
+    fn printStmt(self: *Parser, expr: AstExprs.Statement, indent: usize) void {
         std.debug.print("\n", .{});
         printIndent(indent);
 
@@ -87,16 +87,25 @@ pub const Parser = struct {
                 }
 
                 for (func.body.items) |stmt| {
-                    self.printExpr(stmt, indent + 2);
+                    self.printStmt(stmt, indent + 2);
                 }
             },
             .badStmt => |_| {},
             .attribute => |_| {},
+            .returnStmt => |_| {
+                std.debug.print("Return Statement", .{});
+            },
             .variable => |_| {
                 std.debug.print("Variable Declaration", .{});
             },
             .embed => |_| {
                 std.debug.print("Embed Statement", .{});
+            },
+            .callStmt => |_| {
+                std.debug.print("Call Statement", .{});
+            },
+            .assign => |_| {
+                std.debug.print("Assignment Statement", .{});
             },
             // .unknown => |_| {
             //     std.debug.print("Unknown\n", .{});
@@ -139,9 +148,61 @@ pub const Parser = struct {
             TokenKind.PUB => try self.parsePub(attributes),
             TokenKind.LET => try self.parseVariable(),
             TokenKind.EMBED => try self.parseEmbed(),
+            TokenKind.RETURN => try self.parseReturn(),
+            TokenKind.IDENTIFIER => try self.parseIdentifierStatement(),
             else => try self.badStmt(),
         };
 
+        return stmt;
+    }
+
+    fn parseIdentifierStatement(self: *Parser) ParseError!*AstExprs.Statement {
+        self.advance();
+
+        const next = self.current_token();
+        self.recede();
+
+        const stmt = switch (next.kind) {
+            TokenKind.LEFT_PAREN => self.parseCallExprStmt(),
+            else => self.badStmt(),
+            TokenKind.SINGLE_EQUALS => self.parseAssignExpr(),
+        };
+
+        return stmt;
+    }
+
+    fn parseCallExprStmt(self: *Parser) ParseError!*AstExprs.Statement {
+        const identifier = self.current_token().lexeme;
+        self.advance();
+
+        self.advance(); // (
+        self.advance(); // )
+
+        const stmt = try self.new_stmt();
+        stmt.* = AstExprs.FunctionCallStatement.new(identifier);
+        return stmt;
+    }
+
+    fn parseAssignExpr(self: *Parser) ParseError!*AstExprs.Statement {
+        const identifier = self.current_token().lexeme;
+        self.advance();
+
+        self.advance(); // =
+
+        const expr = try self.parseExpression();
+
+        const stmt = try self.new_stmt();
+        stmt.* = AstExprs.AssignmentStatement.new(identifier, expr.*);
+        return stmt;
+    }
+
+    fn parseReturn(self: *Parser) ParseError!*AstExprs.Statement {
+        self.advance();
+
+        const expr = try self.parseExpression();
+
+        const stmt = try self.new_stmt();
+        stmt.* = AstExprs.ReturnStatement.new(expr.*);
         return stmt;
     }
 
@@ -532,6 +593,16 @@ pub const Parser = struct {
             expr.* = AstExprs.IntegerExpression.new(value);
             return expr;
         } else if (token.kind == TokenKind.IDENTIFIER) {
+            if (self.match(TokenKind.LEFT_PAREN)) {
+                self.advance();
+
+                self.advance(); // )
+
+                const expr = try self.new_expr();
+                expr.* = AstExprs.FunctionCallExpression.new(token.lexeme);
+                return expr;
+            }
+
             const expr = try self.new_expr();
             expr.* = AstExprs.IdentifierExpression.new(token.lexeme);
             return expr;

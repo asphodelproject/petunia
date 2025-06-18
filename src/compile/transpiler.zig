@@ -48,6 +48,10 @@ pub const Transpiler = struct {
             .idExpr => |id| {
                 try writer.print("{s}", .{id.name});
             },
+            .callExpr => |call| {
+                try writer.print("{s}()", .{call.identifier});
+            },
+
             else => {},
         }
     }
@@ -79,8 +83,6 @@ pub const Transpiler = struct {
 
                 try writer.print("\n}}", .{});
             },
-            .badStmt => {},
-            .attribute => |_| {},
             .variable => |variable| {
                 try writer.print("{s} ", .{Analyzer.mapToCType(variable.typeAnnotation)});
                 for (0..variable.pointerLevel) |_| {
@@ -95,12 +97,32 @@ pub const Transpiler = struct {
                 try writer.print(";", .{});
             },
             .embed => |embed| {
-                try writer.print("\n// start embed\n", .{});
+                try writer.print("\n// start embed", .{});
 
                 try writer.print("{s} ", .{embed.value});
 
-                try writer.print("\n// end embed\n", .{});
+                try writer.print("// end embed\n", .{});
             },
+            .returnStmt => |ret| {
+                try writer.print("return ", .{});
+
+                try self.compileExpr(ret.value, writer);
+
+                try writer.print(";", .{});
+            },
+            .callStmt => |callStmt| {
+                try writer.print("{s}() ", .{callStmt.call.identifier});
+                try writer.print(";", .{});
+            },
+            .assign => |assign| {
+                try writer.print("{s} = ", .{assign.identifier});
+
+                try self.compileExpr(assign.value, writer);
+
+                try writer.print(";", .{});
+            },
+            .badStmt => {},
+            .attribute => |_| {},
         }
     }
 };

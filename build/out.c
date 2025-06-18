@@ -6,5 +6,7 @@
 void main() {
 	unsigned char x = 10 + 2 - 3 + 2;
 	unsigned char *y =  &x;
-	_Bool b = 1 & 1 |  ~2 << 3;
+	unsigned char z = 2;
+	z = z + 1;
+	
 }
