@@ -1,0 +1,12 @@
+@inline
+fn echo(str: *u8): u0
+    embed(
+        printf(str);
+    )end
+end
+
+
+@entry
+pub fn main(): u0
+    echo("Hello, World!")
+end

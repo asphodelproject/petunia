@@ -86,6 +86,9 @@ pub const Parser = struct {
                         .interfaceAttribute => |_| {
                             std.debug.print("interface\n", .{});
                         },
+                        .selfAttribute => |_| {
+                            std.debug.print("interface\n", .{});
+                        },
                     }
                 }
 
@@ -125,6 +128,13 @@ pub const Parser = struct {
             .ifStmt => |_| {
                 std.debug.print("If Statement", .{});
             },
+            .doStmt => |_| {
+                std.debug.print("Do Statement", .{});
+            },
+            .structDecl => |_| {
+                std.debug.print("Struct Declaration", .{});
+            },
+            .structMem => |_| {},
             .typeSig => |_| {},
             .none => |_| {},
             // .unknown => |_| {
@@ -170,13 +180,71 @@ pub const Parser = struct {
             TokenKind.EMBED => try self.parseEmbed(),
             TokenKind.RETURN => try self.parseReturn(),
             TokenKind.IDENTIFIER => try self.parseIdentifier(),
+            TokenKind.STAR => try self.parseAssignExpr(),
             TokenKind.WHILE => try self.parseWhile(),
             TokenKind.NEXT => try self.parseNext(),
             TokenKind.STOP => try self.parseStop(),
             TokenKind.IF => try self.parseIf(),
+            TokenKind.DO => try self.parseDo(),
+            TokenKind.STRUCT => try self.parseStruct(),
             else => try self.badStmt(),
         };
 
+        return stmt;
+    }
+
+    fn parseStruct(self: *Parser) ParseError!*AstExprs.Statement {
+        self.advance();
+
+        const idToken = self.current_token();
+        self.advance();
+
+        if (!self.expect(TokenKind.NEWLINE)) {
+            return self.badStmt();
+        }
+
+        var members = std.ArrayList(AstExprs.Statement).init(self.allocator);
+        while (!self.match(TokenKind.END)) {
+            const memberIdentifier = self.current_token();
+            self.advance();
+
+            self.advance(); // :
+
+            const typeSignature = try self.parseTypeSignature();
+
+            const member = try self.new_stmt();
+            member.* = AstExprs.StructMember.new(memberIdentifier.lexeme, typeSignature);
+            try members.append(member.*);
+
+            self.advance();
+        }
+
+        const stmt = try self.new_stmt();
+        stmt.* = AstExprs.StructDeclaration.new(idToken.lexeme, members);
+        return stmt;
+    }
+
+    fn parseDo(self: *Parser) ParseError!*AstExprs.Statement {
+        self.advance();
+
+        const expression = try self.parseExpression();
+
+        if (!self.expect(TokenKind.NEWLINE)) {
+            return self.badStmt();
+        }
+
+        var body = std.ArrayList(AstExprs.Statement).init(self.allocator);
+        while (!self.match(TokenKind.END)) {
+            const stmt = try self.parseStatement();
+            try body.append(stmt.*);
+        }
+
+        if (!self.expect(TokenKind.END)) {
+            return self.badStmt();
+        }
+
+        const stmt = try self.new_stmt();
+        stmt.* = AstExprs.DoStatement.new(expression.*, body);
         return stmt;
     }
 
@@ -184,6 +252,10 @@ pub const Parser = struct {
         self.advance();
 
         const condition = try self.parseExpression();
+
+        if (!self.expect(TokenKind.THEN)) {
+            return self.badStmt();
+        }
 
         if (!self.expect(TokenKind.NEWLINE)) {
             return self.badStmt();
@@ -316,6 +388,12 @@ pub const Parser = struct {
     }
 
     fn parseAssignExpr(self: *Parser) ParseError!*AstExprs.Statement {
+        var pointerLevel: u8 = 0;
+        while (self.match(TokenKind.STAR)) {
+            self.advance();
+            pointerLevel += 1;
+        }
+
         const identifier = self.current_token().lexeme;
         self.advance();
 
@@ -324,7 +402,7 @@ pub const Parser = struct {
         const expr = try self.parseExpression();
 
         const stmt = try self.new_stmt();
-        stmt.* = AstExprs.AssignmentStatement.new(identifier, expr.*);
+        stmt.* = AstExprs.AssignmentStatement.new(identifier, pointerLevel, expr.*);
         return stmt;
     }
 
@@ -383,6 +461,10 @@ pub const Parser = struct {
         if (!self.match(TokenKind.IDENTIFIER)) return self.badStmt();
         self.advance();
 
+        if (!self.expect(TokenKind.COLON)) {
+            return self.badStmt();
+        }
+
         const typeSignature = try self.parseTypeSignature();
 
         if (!self.expect(TokenKind.SINGLE_EQUALS)) {
@@ -408,8 +490,21 @@ pub const Parser = struct {
             TokenKind.INLINE => self.parseInlineAttribute(),
             TokenKind.C_TYPE => self.parseCTypeAttribute(),
             TokenKind.INTERFACE => self.parseInterfaceAttribute(),
+            TokenKind.SELF => self.parseSelfAttribute(),
             else => self.badStmt(),
         };
+    }
+
+    fn parseSelfAttribute(self: *Parser) ParseError!*AstExprs.Statement {
+        self.advance();
+
+        if (!self.expect(TokenKind.NEWLINE)) {
+            return self.badStmt();
+        }
+
+        const stmt = try self.new_stmt();
+        stmt.* = AstExprs.Statement{ .attribute = AstExprs.AttributeStatement{ .selfAttribute = {} } };
+        return stmt;
     }
 
     fn parseInterfaceAttribute(self: *Parser) ParseError!*AstExprs.Statement {
@@ -774,6 +869,14 @@ pub const Parser = struct {
         } else if (token.kind == TokenKind.TRUE or token.kind == TokenKind.FALSE) {
             const expr = try self.new_expr();
             expr.* = AstExprs.IdentifierExpression.new(token.lexeme);
+            return expr;
+        } else if (token.kind == TokenKind.STRING) {
+            const expr = try self.new_expr();
+            expr.* = AstExprs.StringExpression.new(token.lexeme);
+            return expr;
+        } else if (token.kind == TokenKind.CHAR) {
+            const expr = try self.new_expr();
+            expr.* = AstExprs.CharExpression.new(token.lexeme);
             return expr;
         }
 

@@ -1,0 +1,16 @@
+pub fn fib(n: u32): u32
+    if n < 2 then
+        return n
+    end
+
+    return fib(n - 1) + fib(n - 2)
+end
+
+@entry
+pub fn main(): u8
+    embed(
+        printf("%d", fib(10));
+    )end
+    
+    return 0
+end

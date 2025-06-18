@@ -8,3 +8,11 @@ unsigned char main( ) {
     return 0;
     
 }
+
+struct Point {
+
+    
+    unsigned int x;
+    
+    unsigned int y;
+};

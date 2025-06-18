@@ -4,7 +4,7 @@ pub fn main(): u0
 
     while x < 11 : x = x + 1
         embed(
-            printf("Hello, World!");
+            printf("%d ", x);
         )end
     end
 end

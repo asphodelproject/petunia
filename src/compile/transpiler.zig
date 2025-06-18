@@ -57,6 +57,12 @@ pub const Transpiler = struct {
 
                 try self.compileExpr(bin.right.*, writer);
             },
+            .stringExpr => |str| {
+                try writer.print("\"{s}\"", .{str.value});
+            },
+            .charExpr => |c| {
+                try writer.print("\'{s}\'", .{c.value});
+            },
             .unary => |unary| {
                 try writer.print(" {s}", .{Analyzer.mapOperator(unary.op)});
                 try self.compileExpr(unary.right.*, writer);
@@ -163,6 +169,9 @@ pub const Transpiler = struct {
                 try writer.print(";", .{});
             },
             .assign => |assign| {
+                for (0..assign.pointerLevel) |_| {
+                    try writer.print("*", .{});
+                }
                 try writer.print("{s} = ", .{assign.identifier});
 
                 try self.compileExpr(assign.value, writer);
@@ -177,11 +186,24 @@ pub const Transpiler = struct {
                 try writer.print("{{\n", .{});
 
                 for (whileStmt.body.items) |x| {
-                    // try printIndent(writer, indent);
                     try self.compileStmt(x, writer, indent + 1);
                 }
 
                 try self.compileStmt(whileStmt.alteration.*, writer, indent + 1);
+
+                try writer.print("\n", .{});
+                try printIndent(writer, indent);
+                try writer.print("}}", .{});
+            },
+            .doStmt => |do| {
+                try writer.print("for (long i = 0; i < ", .{});
+                try self.compileExpr(do.expression, writer);
+                try writer.print(" ;", .{});
+                try writer.print("  i++) {{\n", .{});
+
+                for (do.body.items) |item| {
+                    try self.compileStmt(item, writer, indent + 1);
+                }
 
                 try writer.print("\n", .{});
                 try printIndent(writer, indent);
@@ -210,6 +232,25 @@ pub const Transpiler = struct {
                 try self.compileStmt(param.typeSignature.*, writer, indent + 1);
                 try writer.print("{s}", .{param.identifier});
                 try writer.print(", ", .{});
+            },
+            .structDecl => |structDecl| {
+                try writer.print("struct {s} {{\n", .{structDecl.identifier});
+                if (structDecl.members.items.len == 0) {
+                    try printIndent(writer, indent + 1);
+                    try writer.print("int x;\n", .{});
+                }
+
+                for (structDecl.members.items) |member| {
+                    try self.compileStmt(member, writer, indent + 1);
+                }
+
+                try writer.print("\n", .{});
+                try printIndent(writer, indent);
+                try writer.print("}};", .{});
+            },
+            .structMem => |member| {
+                try self.compileStmt(member.typeSignature.*, writer, indent);
+                try writer.print("{s};", .{member.identifier});
             },
             .badStmt => {},
             .none => {},

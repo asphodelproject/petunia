@@ -1,0 +1,18 @@
+@inline
+fn add(x: *u8, y: *u8, result: *u8): u0
+    *result = *x + *y
+end
+
+@entry
+pub fn main(): u0
+    let x: u8 = 5
+    let y: u8 = 7
+
+    let result: u8 = 0
+
+    add(&x, &y, &result)
+
+    embed(
+        printf("%d", result);
+    )end
+end

@@ -17,11 +17,16 @@ pub const Statement = union(enum) {
     stopStmt: StopStatement,
     funcParam: FunctionParameter,
     ifStmt: IfStatement,
+    doStmt: DoStatement,
+    structMem: StructMember,
+    structDecl: StructDeclaration,
 };
 
 pub const Expression = union(enum) {
     intExpr: IntegerExpression,
     idExpr: IdentifierExpression,
+    stringExpr: StringExpression,
+    charExpr: CharExpression,
     binary: BinaryExpression,
     unary: UnaryExpression,
     unknown: UnknownExpression,
@@ -33,7 +38,50 @@ pub const AttributeStatement = union(enum) {
     inlineAttribute: void,
     entryAttribute: void,
     interfaceAttribute: void,
+    selfAttribute: void,
     cTypeAttribute: []const u8,
+};
+
+pub const StructDeclaration = struct {
+    identifier: []const u8,
+    members: std.ArrayList(Statement),
+
+    pub fn new(identifier: []const u8, members: std.ArrayList(Statement)) Statement {
+        return Statement{
+            .structDecl = StructDeclaration{
+                .identifier = identifier,
+                .members = members,
+            },
+        };
+    }
+};
+
+pub const StructMember = struct {
+    identifier: []const u8,
+    typeSignature: *Statement,
+
+    pub fn new(identifier: []const u8, typeSignature: *Statement) Statement {
+        return Statement{
+            .structMem = StructMember{
+                .identifier = identifier,
+                .typeSignature = typeSignature,
+            },
+        };
+    }
+};
+
+pub const DoStatement = struct {
+    expression: Expression,
+    body: std.ArrayList(Statement),
+
+    pub fn new(expression: Expression, body: std.ArrayList(Statement)) Statement {
+        return Statement{
+            .doStmt = DoStatement{
+                .body = body,
+                .expression = expression,
+            },
+        };
+    }
 };
 
 pub const IfStatement = struct {
@@ -112,12 +160,14 @@ pub const WhileStatement = struct {
 
 pub const AssignmentStatement = struct {
     identifier: []const u8,
+    pointerLevel: u8,
     value: Expression,
 
-    pub fn new(identifier: []const u8, value: Expression) Statement {
+    pub fn new(identifier: []const u8, pointerLevel: u8, value: Expression) Statement {
         return Statement{
             .assign = AssignmentStatement{
                 .identifier = identifier,
+                .pointerLevel = pointerLevel,
                 .value = value,
             },
         };
@@ -263,6 +313,30 @@ pub const BooleanExpression = struct {
         return Expression{
             .boolExpr = BooleanExpression{
                 .isTrue = isTrue,
+            },
+        };
+    }
+};
+
+pub const CharExpression = struct {
+    value: []const u8,
+
+    pub fn new(value: []const u8) Expression {
+        return Expression{
+            .charExpr = CharExpression{
+                .value = value,
+            },
+        };
+    }
+};
+
+pub const StringExpression = struct {
+    value: []const u8,
+
+    pub fn new(value: []const u8) Expression {
+        return Expression{
+            .stringExpr = StringExpression{
+                .value = value,
             },
         };
     }
