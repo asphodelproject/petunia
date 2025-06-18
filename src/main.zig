@@ -42,5 +42,5 @@ pub fn main() !void {
     _ = analyzer.analyze();
 
     var transpiler = Transpiler.new(parser.exprs);
-    _ = try transpiler.compile();
+    _ = try transpiler.compileAndRun(allocator);
 }

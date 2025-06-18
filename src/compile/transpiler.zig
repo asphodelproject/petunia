@@ -14,7 +14,7 @@ pub const Transpiler = struct {
         };
     }
 
-    pub fn compile(self: *Transpiler) !void {
+    fn compile(self: *Transpiler) !void {
         const cwd = std.fs.cwd();
         const file = try cwd.createFile("build/out.c", .{ .truncate = true });
         defer file.close();
@@ -28,6 +28,22 @@ pub const Transpiler = struct {
         for (self.exprs.items) |expr| {
             try self.compileStmt(expr, writer, 0);
         }
+    }
+
+    pub fn compileAndRun(self: *Transpiler, allocator: std.mem.Allocator) !void {
+        try self.compile();
+
+        var gcc = std.process.Child.init(
+            &[_][]const u8{ "gcc", "build/out.c", "-o", "build/out" },
+            allocator,
+        );
+        _ = try gcc.spawnAndWait();
+
+        var run = std.process.Child.init(
+            &[_][]const u8{"./build/out"},
+            allocator,
+        );
+        _ = try run.spawnAndWait();
     }
 
     fn compileExpr(self: *Transpiler, expr: AstExprs.Expression, writer: anytype) !void {
@@ -49,18 +65,32 @@ pub const Transpiler = struct {
                 try writer.print("{s}", .{id.name});
             },
             .callExpr => |call| {
-                try writer.print("{s}()", .{call.identifier});
+                try writer.print("{s}( ", .{call.identifier});
+
+                const len = call.arguments.items.len;
+                for (call.arguments.items, 0..) |arg, i| {
+                    try self.compileExpr(arg, writer);
+                    if (i < len - 1) {
+                        try writer.print(", ", .{});
+                    }
+                }
+
+                try writer.print(")", .{});
             },
 
             else => {},
         }
     }
 
+    fn printIndent(writer: anytype, indent: usize) !void {
+        for (0..indent) |_| {
+            try writer.print("    ", .{});
+        }
+    }
+
     fn compileStmt(self: *Transpiler, stmt: AstExprs.Statement, writer: anytype, indent: usize) !void {
         try writer.print("\n", .{});
-        for (0..indent) |_| {
-            try writer.print("\t", .{});
-        }
+        try printIndent(writer, indent);
 
         switch (stmt) {
             .function => |func| {
@@ -75,19 +105,37 @@ pub const Transpiler = struct {
                         else => {},
                     }
                 }
-                try writer.print("{s} {s}() {{", .{ Analyzer.mapToCType(func.returnType), func.name });
+                try self.compileStmt(func.returnType.*, writer, indent);
+                try writer.print("{s}", .{func.name});
+                try writer.print("( ", .{});
+
+                const len = func.parameters.items.len;
+                for (func.parameters.items, 0..) |item, i| {
+                    try self.compileStmt(item.funcParam.typeSignature.*, writer, indent);
+                    try writer.print("{s}", .{item.funcParam.identifier});
+
+                    if (i < len - 1) {
+                        try writer.print(", ", .{});
+                    }
+                }
+
+                try writer.print(") ", .{});
+                try writer.print("{{", .{});
 
                 for (func.body.items) |funcStmt| {
                     try self.compileStmt(funcStmt, writer, indent + 1);
                 }
 
-                try writer.print("\n}}", .{});
+                try writer.print("\n}}\n", .{});
             },
-            .variable => |variable| {
-                try writer.print("{s} ", .{Analyzer.mapToCType(variable.typeAnnotation)});
-                for (0..variable.pointerLevel) |_| {
+            .typeSig => |typeSig| {
+                try writer.print("{s} ", .{Analyzer.mapToCType(typeSig.identifier)});
+                for (0..typeSig.pointerLevel) |_| {
                     try writer.print("*", .{});
                 }
+            },
+            .variable => |variable| {
+                try self.compileStmt(variable.typeSignature.*, writer, indent);
                 try writer.print("{s} ", .{variable.name});
 
                 try writer.print("= ", .{});
@@ -97,11 +145,11 @@ pub const Transpiler = struct {
                 try writer.print(";", .{});
             },
             .embed => |embed| {
-                try writer.print("\n// start embed", .{});
+                try writer.print("// start embed", .{});
 
                 try writer.print("{s} ", .{embed.value});
 
-                try writer.print("// end embed\n", .{});
+                try writer.print("// end embed", .{});
             },
             .returnStmt => |ret| {
                 try writer.print("return ", .{});
@@ -111,7 +159,7 @@ pub const Transpiler = struct {
                 try writer.print(";", .{});
             },
             .callStmt => |callStmt| {
-                try writer.print("{s}() ", .{callStmt.call.identifier});
+                try self.compileExpr(callStmt.call, writer);
                 try writer.print(";", .{});
             },
             .assign => |assign| {
@@ -121,7 +169,50 @@ pub const Transpiler = struct {
 
                 try writer.print(";", .{});
             },
+            .whileStmt => |whileStmt| {
+                try writer.print("while (", .{});
+                try self.compileExpr(whileStmt.condition, writer);
+                try writer.print(") ", .{});
+
+                try writer.print("{{\n", .{});
+
+                for (whileStmt.body.items) |x| {
+                    // try printIndent(writer, indent);
+                    try self.compileStmt(x, writer, indent + 1);
+                }
+
+                try self.compileStmt(whileStmt.alteration.*, writer, indent + 1);
+
+                try writer.print("\n", .{});
+                try printIndent(writer, indent);
+                try writer.print("}}", .{});
+            },
+            .nextStmt => |_| {
+                try writer.print("continue;", .{});
+            },
+            .stopStmt => |_| {
+                try writer.print("break;", .{});
+            },
+            .ifStmt => |ifStmt| {
+                try writer.print("if (", .{});
+                try self.compileExpr(ifStmt.condition, writer);
+                try writer.print(")", .{});
+
+                try writer.print("{{\n", .{});
+
+                for (ifStmt.body.items) |item| {
+                    try self.compileStmt(item, writer, indent + 1);
+                }
+
+                try writer.print("}}", .{});
+            },
+            .funcParam => |param| {
+                try self.compileStmt(param.typeSignature.*, writer, indent + 1);
+                try writer.print("{s}", .{param.identifier});
+                try writer.print(", ", .{});
+            },
             .badStmt => {},
+            .none => {},
             .attribute => |_| {},
         }
     }

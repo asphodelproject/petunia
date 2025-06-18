@@ -10,6 +10,13 @@ pub const Statement = union(enum) {
     returnStmt: ReturnStatement,
     callStmt: FunctionCallStatement,
     assign: AssignmentStatement,
+    whileStmt: WhileStatement,
+    none: NoneStatement,
+    typeSig: TypeSignature,
+    nextStmt: NextStatement,
+    stopStmt: StopStatement,
+    funcParam: FunctionParameter,
+    ifStmt: IfStatement,
 };
 
 pub const Expression = union(enum) {
@@ -25,7 +32,82 @@ pub const Expression = union(enum) {
 pub const AttributeStatement = union(enum) {
     inlineAttribute: void,
     entryAttribute: void,
+    interfaceAttribute: void,
     cTypeAttribute: []const u8,
+};
+
+pub const IfStatement = struct {
+    condition: Expression,
+    body: std.ArrayList(Statement),
+
+    pub fn new(condition: Expression, body: std.ArrayList(Statement)) Statement {
+        return Statement{
+            .ifStmt = IfStatement{
+                .condition = condition,
+                .body = body,
+            },
+        };
+    }
+};
+
+pub const FunctionParameter = struct {
+    identifier: []const u8,
+    typeSignature: *Statement,
+
+    pub fn new(identifier: []const u8, typeSignature: *Statement) Statement {
+        return Statement{
+            .funcParam = FunctionParameter{
+                .identifier = identifier,
+                .typeSignature = typeSignature,
+            },
+        };
+    }
+};
+
+pub const TypeSignature = struct {
+    identifier: []const u8,
+    pointerLevel: u8,
+
+    pub fn new(identifier: []const u8, pointerLevel: u8) Statement {
+        return Statement{
+            .typeSig = TypeSignature{
+                .identifier = identifier,
+                .pointerLevel = pointerLevel,
+            },
+        };
+    }
+};
+
+pub const NextStatement = struct {
+    pub fn new() Statement {
+        return Statement{
+            .nextStmt = NextStatement{},
+        };
+    }
+};
+
+pub const StopStatement = struct {
+    pub fn new() Statement {
+        return Statement{
+            .stopStmt = StopStatement{},
+        };
+    }
+};
+
+pub const WhileStatement = struct {
+    condition: Expression,
+    alteration: *const Statement,
+    body: std.ArrayList(Statement),
+
+    pub fn new(condition: Expression, body: std.ArrayList(Statement), alteration: *const Statement) Statement {
+        return Statement{
+            .whileStmt = WhileStatement{
+                .condition = condition,
+                .body = body,
+                .alteration = alteration,
+            },
+        };
+    }
 };
 
 pub const AssignmentStatement = struct {
@@ -68,19 +150,17 @@ pub const EmbedStatement = struct {
 
 pub const VariableDeclaration = struct {
     name: []const u8,
-    typeAnnotation: []const u8,
     initializer: Expression,
     isConstant: bool,
-    pointerLevel: u8,
+    typeSignature: *Statement,
 
-    pub fn new(name: []const u8, typeAnnotation: []const u8, initializer: Expression, isConstant: bool, pointerLevel: u8) Statement {
+    pub fn new(name: []const u8, initializer: Expression, isConstant: bool, typeSignature: *Statement) Statement {
         return Statement{
             .variable = VariableDeclaration{
                 .name = name,
                 .initializer = initializer,
-                .typeAnnotation = typeAnnotation,
                 .isConstant = isConstant,
-                .pointerLevel = pointerLevel,
+                .typeSignature = typeSignature,
             },
         };
     }
@@ -88,17 +168,19 @@ pub const VariableDeclaration = struct {
 
 pub const FunctionDeclaration = struct {
     name: []const u8,
-    returnType: []const u8,
+    returnType: *Statement,
     isPublic: bool,
     attributes: std.ArrayList(AttributeStatement),
     body: std.ArrayList(Statement),
+    parameters: std.ArrayList(Statement),
 
     pub fn new(
         name: []const u8,
-        returnType: []const u8,
+        returnType: *Statement,
         isPublic: bool,
         attributes: std.ArrayList(AttributeStatement),
         body: std.ArrayList(Statement),
+        parameters: std.ArrayList(Statement),
     ) Statement {
         return Statement{
             .function = FunctionDeclaration{
@@ -107,19 +189,23 @@ pub const FunctionDeclaration = struct {
                 .isPublic = isPublic,
                 .attributes = attributes,
                 .body = body,
+                .parameters = parameters,
             },
         };
     }
 };
 
 pub const FunctionCallStatement = struct {
-    call: FunctionCallExpression,
+    call: Expression,
 
-    pub fn new(identifier: []const u8) Statement {
+    pub fn new(identifier: []const u8, arguments: std.ArrayList(Expression)) Statement {
         return Statement{
             .callStmt = FunctionCallStatement{
-                .call = FunctionCallExpression{
-                    .identifier = identifier,
+                .call = Expression{
+                    .callExpr = FunctionCallExpression{
+                        .identifier = identifier,
+                        .arguments = arguments,
+                    },
                 },
             },
         };
@@ -128,11 +214,13 @@ pub const FunctionCallStatement = struct {
 
 pub const FunctionCallExpression = struct {
     identifier: []const u8,
+    arguments: std.ArrayList(Expression),
 
-    pub fn new(identifier: []const u8) Expression {
+    pub fn new(identifier: []const u8, arguments: std.ArrayList(Expression)) Expression {
         return Expression{
             .callExpr = FunctionCallExpression{
                 .identifier = identifier,
+                .arguments = arguments,
             },
         };
     }
@@ -205,6 +293,14 @@ pub const IntegerExpression = struct {
 };
 
 pub const UnknownExpression = struct {};
+
+pub const NoneStatement = struct {
+    pub fn new() Statement {
+        return Statement{
+            .none = NoneStatement{},
+        };
+    }
+};
 
 pub const BadStatement = struct {
     pub fn new() Statement {

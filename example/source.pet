@@ -1,8 +1,8 @@
+fn test(x: *u8, y: u16): u8
+
+end
+
 @entry
 pub fn main(): u0
-    let x: u8 = 10 + 2 - 3 + 2
-    let y: *u8 = &x
 
-    let z: u8 = 2
-    z = z + 1
 end

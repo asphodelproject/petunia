@@ -137,6 +137,7 @@ pub const Lexer = struct {
             '|' => Token.new("|", TokenKind.PIPE),
             '~' => Token.new("~", TokenKind.TILDE),
             '^' => Token.new("^", TokenKind.CARET),
+            ',' => Token.new(",", TokenKind.COMMA),
             '>' => {
                 if (self.current_char() == '=') {
                     self.advance();
@@ -226,6 +227,12 @@ pub const Lexer = struct {
         if (match_keyword(identifier, "not")) return TokenKind.NOT;
         if (match_keyword(identifier, "and")) return TokenKind.AND;
         if (match_keyword(identifier, "or")) return TokenKind.OR;
+        if (match_keyword(identifier, "while")) return TokenKind.WHILE;
+        if (match_keyword(identifier, "interface")) return TokenKind.INTERFACE;
+        if (match_keyword(identifier, "next")) return TokenKind.NEXT;
+        if (match_keyword(identifier, "stop")) return TokenKind.STOP;
+        if (match_keyword(identifier, "if")) return TokenKind.IF;
+        if (match_keyword(identifier, "then")) return TokenKind.THEN;
 
         return TokenKind.IDENTIFIER;
     }

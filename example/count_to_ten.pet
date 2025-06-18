@@ -1,0 +1,10 @@
+@entry
+pub fn main(): u0
+    let x: u8 = 1
+
+    while x < 11 : x = x + 1
+        embed(
+            printf("Hello, World!");
+        )end
+    end
+end

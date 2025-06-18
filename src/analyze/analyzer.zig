@@ -8,7 +8,9 @@ pub const Analyzer = struct {
     exprs: std.ArrayList(AstExprs.Statement),
 
     pub fn new(exprs: std.ArrayList(AstExprs.Statement)) Analyzer {
-        return Analyzer{ .exprs = exprs };
+        return Analyzer{
+            .exprs = exprs,
+        };
     }
 
     pub fn analyze(self: *Analyzer) void {
