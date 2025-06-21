@@ -969,7 +969,28 @@ pub const Parser = struct {
             return expr;
         }
 
-        return try self.parsePrimary();
+        return try self.parsePropertyAccessor();
+    }
+
+    fn parsePropertyAccessor(self: *Parser) ParseError!*AstExprs.Expression {
+        var expr = try self.parsePrimary();
+
+        while (self.match(TokenKind.DOT)) {
+            self.advance();
+
+            const propertyToken = self.currentToken();
+            if (!self.match(TokenKind.IDENTIFIER)) {
+                return self.badExpr();
+            }
+
+            self.advance();
+
+            const newExpr = try self.new_expr();
+            newExpr.* = AstExprs.PropertyAccessExpression.new(expr, propertyToken.lexeme);
+            expr = newExpr;
+        }
+
+        return expr;
     }
 
     fn parsePrimary(self: *Parser) ParseError!*AstExprs.Expression {

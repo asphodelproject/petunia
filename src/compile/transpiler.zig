@@ -83,7 +83,11 @@ pub const Transpiler = struct {
 
                 try writer.print(")", .{});
             },
-
+            .propAccess => |propAccess| {
+                try self.compileExpr(propAccess.object.*, writer);
+                try writer.print(".", .{});
+                try writer.print("{s}", .{propAccess.property});
+            },
             else => {},
         }
     }

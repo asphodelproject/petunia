@@ -9,16 +9,33 @@ struct Point {
     unsigned int x;
     
     unsigned int y;
+    
+    struct Point *otherPoint;
 };
 static inline 
-struct Point zeroPoint( ) {
+struct Point newStruct( 
+unsigned int x, 
+unsigned int y) {
     
-    struct Point x = {.x = 0, .y = 1, };
-    return x;
+    struct Point otherPoint = {.x = 1, .y = 2, };
+    
+    struct Point point = {.x = x, .y = y, .otherPoint =  &otherPoint, };
+    return point;
 }
 
 
 unsigned char main( ) {
     
-    struct Point x = zeroPoint( );
+    struct Point p = newStruct( 5, 10);
+    
+    unsigned char xCord = p.x;
+    
+    unsigned char yCord = p.y;
+    
+    unsigned char otherPointX = p.otherPoint->x;
+    // start embed
+        printf("%d\n", xCord);
+        printf("%d\n\n", yCord);
+        printf("%d", otherPointX);
+     // end embed
 }

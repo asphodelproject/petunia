@@ -24,6 +24,7 @@ pub const TokenKind = enum {
     COLON,
     AT,
     COMMA,
+    DOT,
 
     LET,
     PUB,

@@ -160,6 +160,7 @@ pub const Lexer = struct {
             '~' => Token.new("~", TokenKind.TILDE),
             '^' => Token.new("^", TokenKind.CARET),
             ',' => Token.new(",", TokenKind.COMMA),
+            '.' => Token.new(".", TokenKind.DOT),
             '>' => {
                 if (self.currentChar() == '=') {
                     self.advance();

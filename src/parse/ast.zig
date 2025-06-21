@@ -34,6 +34,7 @@ pub const Expression = union(enum) {
     unknown: UnknownExpression,
     boolExpr: BooleanExpression,
     callExpr: FunctionCallExpression,
+    propAccess: PropertyAccessExpression,
 };
 
 pub const AttributeStatement = union(enum) {
@@ -42,6 +43,20 @@ pub const AttributeStatement = union(enum) {
     interfaceAttribute: void,
     selfAttribute: void,
     cTypeAttribute: []const u8,
+};
+
+pub const PropertyAccessExpression = struct {
+    object: *Expression,
+    property: []const u8,
+
+    pub fn new(object: *Expression, property: []const u8) Expression {
+        return Expression{
+            .propAccess = PropertyAccessExpression{
+                .object = object,
+                .property = property,
+            },
+        };
+    }
 };
 
 pub const StructParameter = struct {
