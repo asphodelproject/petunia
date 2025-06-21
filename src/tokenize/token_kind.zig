@@ -46,6 +46,7 @@ pub const TokenKind = enum {
     DO,
     SELF,
     STRUCT,
+    NEW,
 
     IDENTIFIER,
     INTEGER,

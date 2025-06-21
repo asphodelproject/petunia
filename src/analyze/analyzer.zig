@@ -108,6 +108,6 @@ pub const Analyzer = struct {
             return "size_t";
         }
 
-        return "";
+        return datatype;
     }
 };

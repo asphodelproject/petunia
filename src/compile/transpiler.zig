@@ -135,7 +135,14 @@ pub const Transpiler = struct {
                 try writer.print("\n}}\n", .{});
             },
             .typeSig => |typeSig| {
-                try writer.print("{s} ", .{Analyzer.mapToCType(typeSig.identifier)});
+                const mapped = Analyzer.mapToCType(typeSig.identifier);
+
+                // no native c type was found; it is a complex data type.
+                if (std.mem.eql(u8, mapped, typeSig.identifier)) {
+                    try writer.print("struct ", .{});
+                }
+
+                try writer.print("{s} ", .{mapped});
                 for (0..typeSig.pointerLevel) |_| {
                     try writer.print("*", .{});
                 }
@@ -252,6 +259,19 @@ pub const Transpiler = struct {
                 try self.compileStmt(member.typeSignature.*, writer, indent);
                 try writer.print("{s};", .{member.identifier});
             },
+            .structAlloc => |structAlloc| {
+                try self.compileStmt(structAlloc.typeSignature.*, writer, indent);
+                try writer.print("{s} = {{", .{structAlloc.identifier});
+
+                for (structAlloc.parameters.items) |parameter| {
+                    try writer.print(".{s} = ", .{parameter.structParam.identifier});
+                    try self.compileExpr(parameter.structParam.expression.*, writer);
+                    try writer.print(", ", .{});
+                }
+
+                try writer.print("}};", .{});
+            },
+            .structParam => |_| {},
             .badStmt => {},
             .none => {},
             .attribute => |_| {},

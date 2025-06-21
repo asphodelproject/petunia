@@ -20,6 +20,8 @@ pub const Statement = union(enum) {
     doStmt: DoStatement,
     structMem: StructMember,
     structDecl: StructDeclaration,
+    structAlloc: StructAllocation,
+    structParam: StructParameter,
 };
 
 pub const Expression = union(enum) {
@@ -42,14 +44,46 @@ pub const AttributeStatement = union(enum) {
     cTypeAttribute: []const u8,
 };
 
+pub const StructParameter = struct {
+    identifier: []const u8,
+    expression: *Expression,
+
+    pub fn new(identifier: []const u8, expression: *Expression) Statement {
+        return Statement{
+            .structParam = StructParameter{
+                .identifier = identifier,
+                .expression = expression,
+            },
+        };
+    }
+};
+
+pub const StructAllocation = struct {
+    identifier: []const u8,
+    typeSignature: *Statement,
+    parameters: std.ArrayList(Statement),
+
+    pub fn new(identifier: []const u8, typeSignature: *Statement, parameters: std.ArrayList(Statement)) Statement {
+        return Statement{
+            .structAlloc = StructAllocation{
+                .identifier = identifier,
+                .typeSignature = typeSignature,
+                .parameters = parameters,
+            },
+        };
+    }
+};
+
 pub const StructDeclaration = struct {
     identifier: []const u8,
+    isPublic: bool,
     members: std.ArrayList(Statement),
 
-    pub fn new(identifier: []const u8, members: std.ArrayList(Statement)) Statement {
+    pub fn new(identifier: []const u8, isPublic: bool, members: std.ArrayList(Statement)) Statement {
         return Statement{
             .structDecl = StructDeclaration{
                 .identifier = identifier,
+                .isPublic = isPublic,
                 .members = members,
             },
         };
@@ -377,9 +411,13 @@ pub const NoneStatement = struct {
 };
 
 pub const BadStatement = struct {
-    pub fn new() Statement {
+    lexeme: []const u8,
+
+    pub fn new(lexeme: []const u8) Statement {
         return Statement{
-            .badStmt = BadStatement{},
+            .badStmt = BadStatement{
+                .lexeme = lexeme,
+            },
         };
     }
 };

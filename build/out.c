@@ -3,12 +3,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-
-unsigned char main( ) {
-    return 0;
-    
-}
-
 struct Point {
 
     
@@ -16,3 +10,15 @@ struct Point {
     
     unsigned int y;
 };
+static inline 
+struct Point zeroPoint( ) {
+    
+    struct Point x = {.x = 0, .y = 1, };
+    return x;
+}
+
+
+unsigned char main( ) {
+    
+    struct Point x = zeroPoint( );
+}

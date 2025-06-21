@@ -2,8 +2,3 @@
 pub fn main(argc: u32, argv: **u8): u8
     return 0
 end
-
-    let p: Point = (
-        x: 2,
-        y: 4
-    )

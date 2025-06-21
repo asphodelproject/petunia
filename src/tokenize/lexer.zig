@@ -258,6 +258,7 @@ pub const Lexer = struct {
         if (matchKeyword(identifier, "do")) return TokenKind.DO;
         if (matchKeyword(identifier, "self")) return TokenKind.SELF;
         if (matchKeyword(identifier, "struct")) return TokenKind.STRUCT;
+        if (matchKeyword(identifier, "new")) return TokenKind.NEW;
 
         return TokenKind.IDENTIFIER;
     }
