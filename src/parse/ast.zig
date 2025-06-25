@@ -48,12 +48,14 @@ pub const AttributeStatement = union(enum) {
 pub const PropertyAccessExpression = struct {
     object: *Expression,
     property: []const u8,
+    accessor: []const u8,
 
-    pub fn new(object: *Expression, property: []const u8) Expression {
+    pub fn new(object: *Expression, property: []const u8, accessor: []const u8) Expression {
         return Expression{
             .propAccess = PropertyAccessExpression{
                 .object = object,
                 .property = property,
+                .accessor = accessor,
             },
         };
     }

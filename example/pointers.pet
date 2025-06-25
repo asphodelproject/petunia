@@ -1,0 +1,27 @@
+@entry
+pub fn main (argc: u32, argv: **u8): u0
+    let x: u8 = 10
+
+    let xPtr: *u8 = &x
+    let xPtrPtr: **u8 = &xPtr
+    let xPtrPtrPtr: ***u8 = &xPtrPtr
+    let xPtrPtrPtrPtr: ****u8 = &xPtrPtrPtr
+    let xPtrPtrPtrPtrPtr: *****u8 = &xPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtr: ******u8 = &xPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtr: *******u8 = &xPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtr: ********u8 = &xPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtr: *********u8 = &xPtrPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr: **********u8 = &xPtrPtrPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr: ***********u8 = &xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr: ************u8 = &xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr: *************u8 = &xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr: **************u8 = &xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr: ***************u8 = &xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr: ****************u8 = &xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr: *****************u8 = &xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr
+    let xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr: ******************u8 = &xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr
+
+    embed(
+        printf("%d", ******************xPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtrPtr); // huh
+    )end
+end

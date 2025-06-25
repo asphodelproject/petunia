@@ -68,6 +68,7 @@ pub const Analyzer = struct {
             TokenKind.PIPE => "|",
             TokenKind.LEFT_SHIFT => "<<",
             TokenKind.RIGHT_SHIFT => ">>",
+            TokenKind.DEREF_ARROW => "->",
             else => "",
         };
     }

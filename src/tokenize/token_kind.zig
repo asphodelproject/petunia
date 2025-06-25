@@ -25,6 +25,7 @@ pub const TokenKind = enum {
     AT,
     COMMA,
     DOT,
+    DEREF_ARROW,
 
     LET,
     PUB,

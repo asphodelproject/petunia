@@ -3,39 +3,18 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-struct Point {
 
+unsigned char main( 
+unsigned int argc, 
+unsigned char **argv) {
     
-    unsigned int x;
+    unsigned short x = 10;
     
-    unsigned int y;
+    unsigned short *xPtr =  &x;
     
-    struct Point *otherPoint;
-};
-static inline 
-struct Point newStruct( 
-unsigned int x, 
-unsigned int y) {
-    
-    struct Point otherPoint = {.x = 1, .y = 2, };
-    
-    struct Point point = {.x = x, .y = y, .otherPoint =  &otherPoint, };
-    return point;
-}
-
-
-unsigned char main( ) {
-    
-    struct Point p = newStruct( 5, 10);
-    
-    unsigned char xCord = p.x;
-    
-    unsigned char yCord = p.y;
-    
-    unsigned char otherPointX = p.otherPoint->x;
+    unsigned short s =  - - * xPtr - 1 -  - x;
     // start embed
-        printf("%d\n", xCord);
-        printf("%d\n\n", yCord);
-        printf("%d", otherPointX);
+        printf("%d", s);
      // end embed
+    return 0;
 }

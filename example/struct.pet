@@ -5,9 +5,19 @@ pub struct Point
 end
 
 @inline
+fn zeroPoint(): Point
+    let point: Point = new (
+        x: 0
+        y: 0
+    )
+
+    return point
+end
+
+@inline
 fn newStruct(x: u32, y: u32): Point
     let otherPoint: Point = new (
-        x: 1
+        x: 7
         y: 2
     )
 
@@ -27,11 +37,12 @@ pub fn main(): u8
     let xCord: u8 = p.x
     let yCord: u8 = p.y
 
-    let otherPointX: u8 = p.otherPoint.x
+    let otherPointX: u8 = p.otherPoint->x
+    let otherPointY: u8 = p.otherPoint->y
 
     embed(
         printf("%d\n", xCord);
-        printf("%d\n\n", yCord);
-        printf("%d", otherPointX);
+        printf("%d\n", yCord);
+        printf("other x: %d | other y: %d", otherPointX, otherPointY);
     )end
 end

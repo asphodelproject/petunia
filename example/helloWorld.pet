@@ -5,7 +5,6 @@ fn echo(str: *u8): u0
     )end
 end
 
-
 @entry
 pub fn main(): u0
     echo("Hello, World!")

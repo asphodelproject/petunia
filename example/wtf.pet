@@ -1,0 +1,13 @@
+@entry
+pub fn main (argc: u32, argv: **u8): u8
+    let x: u16 = 10
+    let xPtr: *u16 = &x
+
+    let s: u16 = - - + *xPtr - 1 - - x
+
+    embed(
+        printf("%d", s);
+    )end
+
+    return 0
+end

@@ -2,7 +2,7 @@
 pub fn main(): u0
     let x: u8 = 1
 
-    while x < 11 : x = x + 1
+    while x <= 10 : x = x + 1
         embed(
             printf("%d ", x);
         )end

@@ -943,7 +943,7 @@ pub const Parser = struct {
     }
 
     fn parseUnary(self: *Parser) ParseError!*AstExprs.Expression {
-        while (self.match(TokenKind.NOT) or self.match(TokenKind.TILDE)) {
+        while (self.match(TokenKind.NOT) or self.match(TokenKind.TILDE) or self.match(TokenKind.MINUS)) {
             const op = self.currentToken();
             self.advance();
 
@@ -975,7 +975,8 @@ pub const Parser = struct {
     fn parsePropertyAccessor(self: *Parser) ParseError!*AstExprs.Expression {
         var expr = try self.parsePrimary();
 
-        while (self.match(TokenKind.DOT)) {
+        while (self.match(TokenKind.DOT) or self.match(TokenKind.DEREF_ARROW)) {
+            const accessorToken = self.currentToken();
             self.advance();
 
             const propertyToken = self.currentToken();
@@ -986,7 +987,7 @@ pub const Parser = struct {
             self.advance();
 
             const newExpr = try self.new_expr();
-            newExpr.* = AstExprs.PropertyAccessExpression.new(expr, propertyToken.lexeme);
+            newExpr.* = AstExprs.PropertyAccessExpression.new(expr, propertyToken.lexeme, accessorToken.lexeme);
             expr = newExpr;
         }
 

@@ -150,7 +150,14 @@ pub const Lexer = struct {
             },
             ';' => Token.new(";", TokenKind.SEMICOLON),
             '+' => Token.new("+", TokenKind.PLUS),
-            '-' => Token.new("-", TokenKind.MINUS),
+            '-' => {
+                if (self.currentChar() == '>') {
+                    self.advance();
+                    return Token.new("->", TokenKind.DEREF_ARROW);
+                }
+
+                return Token.new("-", TokenKind.MINUS);
+            },
             '*' => Token.new("*", TokenKind.STAR),
             '/' => Token.new("/", TokenKind.SLASH),
             '%' => Token.new("%", TokenKind.MODULO),

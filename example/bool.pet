@@ -1,0 +1,16 @@
+@inline
+fn invertBoolean(x: **bool): u0
+    **x = not **x
+end
+
+@entry
+pub fn main(): u0
+    let someTruth: bool = true
+    let truthPtr: *bool = &someTruth
+    
+    invertBoolean(&truthPtr)
+
+    embed(
+        printf("A truth: %d", someTruth);
+    )end    
+end
